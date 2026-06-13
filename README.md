@@ -11,7 +11,7 @@ Built for a hackathon focused on making space more accessible, personal, and int
 
 ## Features
 
-### 🛰 Live ISS Tracking
+###  Live ISS Tracking
 Track the International Space Station's current position in real time.
 
 ### NASA Astronomy Picture of the Day
@@ -32,7 +32,7 @@ Stay informed with up-to-date information from public space APIs.
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 - **Python**
 - **Streamlit**
@@ -117,7 +117,7 @@ SkyScan bridges this gap by combining live astronomical data with AI-powered exp
 
 ---
 
-## 👥 Team Ishan Dutta, Rishit Mukherjee. Vishesh Bhati
+## Team Ishan Dutta, Rishit Mukherjee. Vishesh Bhati
 
 Built during a hackathon by a team passionate about technology, AI, and space exploration.
 
