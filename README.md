@@ -117,7 +117,7 @@ SkyScan bridges this gap by combining live astronomical data with AI-powered exp
 
 ---
 
-## Team Ishan Dutta, Rishit Mukherjee. Vishesh Bhati
+## Team Ishan Dutta, Rishit Mukherjee, Vishesh Bhati
 
 Built during a hackathon by a team passionate about technology, AI, and space exploration.
 
