@@ -63,35 +63,7 @@ Personalized Answer
 
 ---
 
-## Installation
 
-Clone the repository:
-
-```bash
-git clone https://github.com/yourusername/skyscan.git
-cd skyscan
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Create a `.env` file:
-
-```env
-GEMINI_API_KEY=your_key_here
-NASA_API_KEY=your_key_here
-```
-
-Run the app:
-
-```bash
-streamlit run app.py
-```
-
----
 
 ## Problem
 
