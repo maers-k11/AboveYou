@@ -123,6 +123,6 @@ Built during a hackathon by a team passionate about technology, AI, and space ex
 
 ---
 
-## 📜 License
+## License
 
 MIT License
