@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkyScan — Live Space Dashboard & Stargazing Assistant</title>
+  <meta name="description" content="Ask the sky what's happening above you right now. Get live ISS tracking, satellite flyovers, visible planets, moon phases, and chat with AstroBot.">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Starry Background Canvas -->
+  <canvas id="stars-canvas"></canvas>
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-pulse">
+          <i class="fa-solid fa-user-astronaut"></i>
+        </div>
+        <div>
+          <h1 class="app-title">🌌 SkyScan</h1>
+          <p class="app-tagline">"Ask the sky what's happening above you right now."</p>
+        </div>
+      </div>
+      
+      <!-- Location & Time Info -->
+      <div class="header-metadata glass-panel">
+        <div class="meta-item" id="location-widget">
+          <i class="fa-solid fa-location-crosshairs text-cyan pulse"></i>
+          <div class="meta-text">
+            <span class="meta-label">YOUR LOCATION</span>
+            <span class="meta-value" id="current-city">Detecting location...</span>
+          </div>
+          <button class="icon-btn" id="change-location-btn" title="Change Location">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </div>
+        <div class="meta-item">
+          <i class="fa-solid fa-clock text-purple"></i>
+          <div class="meta-text">
+            <span class="meta-label">LOCAL TIME</span>
+            <span class="meta-value" id="current-time">16:48:58</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Location Modal Selector -->
+    <div id="location-modal" class="modal">
+      <div class="modal-content glass-panel">
+        <span class="close-btn">&times;</span>
+        <h3><i class="fa-solid fa-earth-americas"></i> Select Observer Location</h3>
+        <p class="modal-description">Planets and satellite passes depend on where you are looking up from.</p>
+        <div class="search-box">
+          <input type="text" id="city-input" placeholder="Enter city name (e.g. Kolkata, London, Tokyo)..." autocomplete="off">
+          <button id="search-city-btn" class="btn btn-primary">Locate</button>
+        </div>
+        <div class="quick-cities">
+          <span class="quick-city-tag" data-lat="22.5726" data-lng="88.3639" data-name="Kolkata, IN">Kolkata</span>
+          <span class="quick-city-tag" data-lat="40.7128" data-lng="-74.0060" data-name="New York, US">New York</span>
+          <span class="quick-city-tag" data-lat="51.5074" data-lng="-0.1278" data-name="London, UK">London</span>
+          <span class="quick-city-tag" data-lat="35.6762" data-lng="139.6503" data-name="Tokyo, JP">Tokyo</span>
+          <span class="quick-city-tag" data-lat="-33.8688" data-lng="151.2093" data-name="Sydney, AU">Sydney</span>
+        </div>
+        <div class="divider"><span>OR</span></div>
+        <button id="use-gps-btn" class="btn btn-secondary">
+          <i class="fa-solid fa-location-arrow"></i> Use Device GPS
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Workspace Grid -->
+    <main class="main-grid">
+      
+      <!-- Left Dashboard Content -->
+      <section class="dashboard-area">
+        
+        <!-- Row 1: ISS Map Tracker & Moon Phase -->
+        <div class="dashboard-row grid-2-col">
+          
+          <!-- ISS Position Card -->
+          <div class="card glass-panel" id="iss-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-satellite text-cyan"></i> Live ISS Tracker</h3>
+              <span class="live-indicator"><span class="dot pulse"></span> LIVE</span>
+            </div>
+            <div class="card-body">
+              <div class="map-wrapper">
+                <img id="map-bg-img" src="world-map.svg" alt="World Map">
+                <canvas id="iss-map-canvas"></canvas>
+                <div class="map-overlay-coordinates">
+                  <div class="coord-readout">
+                    <span class="lbl">LAT:</span> <span id="iss-lat" class="val">--</span>
+                  </div>
+                  <div class="coord-readout">
+                    <span class="lbl">LNG:</span> <span id="iss-lng" class="val">--</span>
+                  </div>
+                </div>
+              </div>
+              <div class="iss-telemetry">
+                <div class="telemetry-item">
+                  <span class="t-label">VELOCITY</span>
+                  <span class="t-value" id="iss-velocity">-- km/h</span>
+                </div>
+                <div class="telemetry-item">
+                  <span class="t-label">ALTITUDE</span>
+                  <span class="t-value" id="iss-altitude">-- km</span>
+                </div>
+                <div class="telemetry-item">
+                  <span class="t-label">PASS TIME</span>
+                  <span class="t-value text-cyan" id="iss-pass-time">Calculating...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Moon Phase Card -->
+          <div class="card glass-panel" id="moon-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-moon text-gold"></i> Moon Phase</h3>
+              <span class="badge" id="moon-phase-name">Waxing Gibbous</span>
+            </div>
+            <div class="card-body moon-layout">
+              <div class="moon-render-container">
+                <!-- Glowing Moon Visualizer -->
+                <div class="moon-glow"></div>
+                <svg id="moon-svg" viewBox="0 0 100 100">
+                  <defs>
+                    <radialGradient id="moon-grad" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#fffef0" />
+                      <stop offset="85%" stop-color="#eedda8" />
+                      <stop offset="100%" stop-color="#c8b070" />
+                    </radialGradient>
+                    <pattern id="moon-texture" width="100" height="100" patternUnits="userSpaceOnUse">
+                      <!-- Lunar craters SVG overlays -->
+                      <circle cx="35" cy="40" r="8" fill="#a48c4f" opacity="0.3" />
+                      <circle cx="37" cy="42" r="5" fill="#806b38" opacity="0.2" />
+                      <circle cx="65" cy="55" r="10" fill="#a48c4f" opacity="0.35" />
+                      <circle cx="60" cy="30" r="6" fill="#a48c4f" opacity="0.25" />
+                      <circle cx="45" cy="70" r="7" fill="#a48c4f" opacity="0.3" />
+                      <circle cx="25" cy="65" r="5" fill="#a48c4f" opacity="0.2" />
+                    </pattern>
+                  </defs>
+                  <!-- Base dark moon shadow -->
+                  <circle cx="50" cy="50" r="45" fill="#141424" />
+                  <!-- Lighted part of the moon -->
+                  <path id="moon-light-path" d="" fill="url(#moon-grad)" />
+                  <!-- Overlay craters texture -->
+                  <circle cx="50" cy="50" r="45" fill="url(#moon-texture)" style="mix-blend-mode: multiply;" />
+                </svg>
+              </div>
+              <div class="moon-details">
+                <div class="detail-row">
+                  <span class="d-label">Illumination</span>
+                  <span class="d-value" id="moon-illumination">73%</span>
+                </div>
+                <div class="detail-row">
+                  <span class="d-label">Moon Age</span>
+                  <span class="d-value" id="moon-age">10.4 days</span>
+                </div>
+                <div class="detail-row">
+                  <span class="d-label">Distance</span>
+                  <span class="d-value" id="moon-distance">384,400 km</span>
+                </div>
+                <div class="detail-row">
+                  <span class="d-label">Next Full Moon</span>
+                  <span class="d-value text-gold" id="moon-next-full">June 29</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Satellites Overhead & Visible Planets -->
+        <div class="dashboard-row grid-2-col">
+          
+          <!-- Satellites Overhead Card -->
+          <div class="card glass-panel" id="satellites-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-satellite-dish text-green"></i> Satellites Overhead</h3>
+              <span class="badge badge-green" id="satellite-count">3 Active Now</span>
+            </div>
+            <div class="card-body">
+              <div class="satellite-list" id="satellite-list-container">
+                <div class="satellite-item">
+                  <div class="sat-icon-wrap"><i class="fa-solid fa-satellite"></i></div>
+                  <div class="sat-info">
+                    <span class="sat-name">HST (Hubble Space Telescope)</span>
+                    <span class="sat-details">Alt: 525km | Dir: SW | Elev: 42°</span>
+                  </div>
+                  <span class="sat-status pulse-text">Visible</span>
+                </div>
+                <div class="satellite-item">
+                  <div class="sat-icon-wrap"><i class="fa-solid fa-network-wired"></i></div>
+                  <div class="sat-info">
+                    <span class="sat-name">Starlink-4581 Train</span>
+                    <span class="sat-details">Alt: 540km | Dir: WNW | Elev: 18°</span>
+                  </div>
+                  <span class="sat-status">Low Horizon</span>
+                </div>
+                <div class="satellite-item">
+                  <div class="sat-icon-wrap"><i class="fa-solid fa-wind"></i></div>
+                  <div class="sat-info">
+                    <span class="sat-name">NOAA-19 (Weather)</span>
+                    <span class="sat-details">Alt: 847km | Dir: NE | Elev: 65°</span>
+                  </div>
+                  <span class="sat-status pass-incoming">Incoming (3m)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visible Planets Card -->
+          <div class="card glass-panel" id="planets-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-circle-nodes text-purple"></i> Visible Planets Tonight</h3>
+              <span class="badge" id="planets-count">2 Visible</span>
+            </div>
+            <div class="card-body">
+              <div class="planets-grid" id="planets-grid-container">
+                <div class="planet-pill visible" data-planet="Venus">
+                  <span class="planet-dot Venus"></span>
+                  <div class="planet-meta">
+                    <span class="planet-name">Venus</span>
+                    <span class="planet-time">Visible at Sunset (West)</span>
+                  </div>
+                  <i class="fa-solid fa-eye text-green"></i>
+                </div>
+                <div class="planet-pill visible" data-planet="Jupiter">
+                  <span class="planet-dot Jupiter"></span>
+                  <div class="planet-meta">
+                    <span class="planet-name">Jupiter</span>
+                    <span class="planet-time">Visible 8:00 PM - 11:30 PM</span>
+                  </div>
+                  <i class="fa-solid fa-eye text-green"></i>
+                </div>
+                <div class="planet-pill" data-planet="Mars">
+                  <span class="planet-dot Mars"></span>
+                  <div class="planet-meta">
+                    <span class="planet-name">Mars</span>
+                    <span class="planet-time">Rises 3:15 AM (East)</span>
+                  </div>
+                  <i class="fa-solid fa-eye-slash text-muted"></i>
+                </div>
+                <div class="planet-pill" data-planet="Saturn">
+                  <span class="planet-dot Saturn"></span>
+                  <div class="planet-meta">
+                    <span class="planet-name">Saturn</span>
+                    <span class="planet-time">Rises 1:40 AM (East)</span>
+                  </div>
+                  <i class="fa-solid fa-eye-slash text-muted"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Meteor Showers & Upcoming Celestial Events -->
+        <div class="dashboard-row">
+          <div class="card glass-panel" id="events-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-star-shooting text-orange"></i> Cosmic Events & Meteor Showers</h3>
+              <div class="event-filter">
+                <span class="filter-tab active" data-filter="all">All</span>
+                <span class="filter-tab" data-filter="shower">Meteor Showers</span>
+                <span class="filter-tab" data-filter="eclipse">Eclipses & Alignments</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="events-timeline" id="events-timeline-container">
+                <div class="timeline-item shower active-now">
+                  <div class="timeline-date">
+                    <span class="month">JUN</span>
+                    <span class="day">13</span>
+                  </div>
+                  <div class="timeline-content">
+                    <span class="event-tag badge-orange">Active Now</span>
+                    <h4>Arietiids Meteor Shower Peak</h4>
+                    <p>Daytime shower, but best visible right before dawn (4:00 AM - 5:00 AM). Expect 10-15 meteors per hour under clear eastern skies.</p>
+                  </div>
+                </div>
+                <div class="timeline-item solstice">
+                  <div class="timeline-date">
+                    <span class="month">JUN</span>
+                    <span class="day">21</span>
+                  </div>
+                  <div class="timeline-content">
+                    <span class="event-tag badge-purple">Solstice</span>
+                    <h4>June Solstice (Northern Summer)</h4>
+                    <p>The longest day of the year in the northern hemisphere. Perfect for long twilight observations of noctilucent clouds.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Space Today & Birthday Sky -->
+        <div class="dashboard-row grid-2-col">
+          
+          <!-- Space Today Card -->
+          <div class="card glass-panel" id="space-today-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-newspaper text-cyan"></i> Space Today</h3>
+            </div>
+            <div class="card-body">
+              <div id="space-today-content" class="space-today-content">
+                <div class="news-item">
+                  <h4><i class="fa-solid fa-sun text-orange"></i> High Solar Activity</h4>
+                  <p>A massive X-class solar flare erupted earlier today, increasing the chances of visible auroras at lower latitudes tonight.</p>
+                </div>
+                <div class="news-item mt-3">
+                  <h4><i class="fa-solid fa-rocket text-purple"></i> Artemis Update</h4>
+                  <p>NASA engineers successfully completed the final engine tests for the upcoming Artemis III lunar landing mission.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Birthday Sky Card -->
+          <div class="card glass-panel" id="birthday-sky-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-cake-candles text-gold"></i> Birthday Sky</h3>
+            </div>
+            <div class="card-body">
+              <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1rem;">Discover what NASA saw on the day you were born.</p>
+              <form id="birthday-form" class="birthday-form">
+                <input type="date" id="birthday-input" required class="glass-input">
+                <button type="submit" class="btn btn-primary">Discover</button>
+              </form>
+              <div id="birthday-result" class="birthday-result" style="display: none; margin-top: 1rem;">
+                <!-- Content injected via JS -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- Right Column: AstroBot Chatbox -->
+      <section class="chat-area">
+        <div class="card glass-panel chat-card">
+          <div class="chat-header">
+            <div class="bot-info">
+              <div class="bot-avatar pulse-glow">
+                <i class="fa-solid fa-robot"></i>
+              </div>
+              <div>
+                <h3>AstroBot</h3>
+                <p class="status-text"><span class="dot green-dot"></span> Sky Intelligence Online</p>
+              </div>
+            </div>
+            <button class="icon-btn" id="clear-chat" title="Clear Conversation">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+          
+          <!-- Chat Messages Container -->
+          <div class="chat-messages" id="chat-messages-container">
+            
+            <!-- Welcome Bot Message -->
+            <div class="message bot-message animate-fade-in">
+              <div class="message-content">
+                <p>Hello! I am <strong>AstroBot</strong>, your local stargazing and cosmic intelligence companion.</p>
+                <p>I track the sky live for your coordinates. Ask me what you can see tonight, where the ISS is, or when to head outdoors!</p>
+              </div>
+              <span class="message-time">Just Now</span>
+            </div>
+            
+          </div>
+
+          <!-- Suggestion Prompts -->
+          <div class="chat-suggestions-box">
+            <span class="suggestion-label">Suggested Queries:</span>
+            <div class="suggestions-list">
+              <button class="suggestion-btn" data-query="What can I see tonight?">
+                <i class="fa-regular fa-compass"></i> What can I see tonight?
+              </button>
+              <button class="suggestion-btn" data-query="Is there anything interesting happening in space today?">
+                <i class="fa-regular fa-star"></i> Interesting things happening today?
+              </button>
+            </div>
+          </div>
+
+          <!-- Chat Input Form -->
+          <form class="chat-input-area" id="chat-form">
+            <input type="text" id="chat-input" placeholder="Ask the sky what's happening..." autocomplete="off">
+            <button type="submit" class="send-btn" id="send-msg-btn">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>© 2026 SkyScan. All orbital coordinates computed in real-time. Core data derived from ISS telemetry and astronomical algorithms.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
